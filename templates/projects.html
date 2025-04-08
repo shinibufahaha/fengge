@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Information</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .action-button {
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Create Time</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>1</td>
+                <td>Project Alpha</td>
+                <td>2023-10-01 10:00 AM</td>
+                <td>Stopped</td>
+                <td><button class="action-button" onclick="toggleButton(this, 1)">Start Analyze</button></td>
+            </tr>
+            <tr>
+                <td>2</td>
+                <td>Project Beta</td>
+                <td>2023-10-02 11:00 AM</td>
+                <td>Stopped</td>
+                <td><button class="action-button" onclick="toggleButton(this, 2)">Start Analyze</button></td>
+            </tr>
+            <tr>
+                <td>3</td>
+                <td>Project Gamma</td>
+                <td>2023-10-03 12:00 PM</td>
+                <td>Stopped</td>
+                <td><button class="action-button" onclick="toggleButton(this, 3)">Start Analyze</button></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <script>
+        function toggleButton(button, projectId) {
+            const statusCell = button.parentElement.parentElement.querySelector('td:nth-child(4)');
+            const currentText = button.textContent;
+
+            if (currentText === 'Start Analyze') {
+                button.textContent = 'Stop Analyze';
+                statusCell.textContent = 'Running';
+                sendRequest(projectId, 'start');
+            } else if (currentText === 'Stop Analyze') {
+                button.textContent = 'Restart Analyze';
+                statusCell.textContent = 'Stopped';
+                sendRequest(projectId, 'stop');
+            } else if (currentText === 'Restart Analyze') {
+                button.textContent = 'Stop Analyze';
+                statusCell.textContent = 'Running';
+                sendRequest(projectId, 'restart');
+            }
+        }
+
+        function sendRequest(projectId, action) {
+            // Example of sending a request to the server using Fetch API
+            fetch(`/api/project/${projectId}/${action}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ projectId, action })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Success:', data);
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+        }
+    </script>
+</body>
+</html>

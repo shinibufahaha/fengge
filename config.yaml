@@ -1,0 +1,13 @@
+server:
+  port: 8080
+database:
+  host: "localhost"
+  port: 5432
+  username: "user"
+  password: "pass"
+joernPath:
+  joern: /mnt/git/joern/joern-cli/joern
+  joernParse: /mnt/git/joern/joern-cli/joern-parse 
+filesPath:
+  projectPath: /mnt/git/fengge/
+  jadxPath: /mnt/git/jadx/bin/jadx

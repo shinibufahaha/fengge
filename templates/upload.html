@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Upload Center</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .dropzone {
+            border: 2px dashed #6366f1;
+            transition: all 0.3s ease;
+        }
+        .dropzone.active {
+            border-color: #10b981;
+            background-color: rgba(16, 185, 129, 0.05);
+        }
+        .file-item {
+            transition: all 0.3s ease;
+        }
+        .file-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        .progress-bar {
+            transition: width 0.5s ease;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-12 max-w-4xl">
+        <div class="text-center mb-12">
+            <h1 class="text-4xl font-bold text-indigo-600 mb-3">File Upload Center</h1>
+            <p class="text-gray-600 max-w-lg mx-auto">Upload your files securely and easily. Supports all file types up to 50MB.</p>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+            <!-- Upload Section -->
+            <div class="p-8">
+                <div id="dropzone" class="dropzone rounded-lg p-12 text-center cursor-pointer mb-8">
+                    <div class="flex flex-col items-center justify-center">
+                        <i class="fas fa-cloud-upload-alt text-5xl text-indigo-500 mb-4"></i>
+                        <h3 class="text-xl font-semibold text-gray-800 mb-2">Drag & Drop Files Here</h3>
+                        <p class="text-gray-500 mb-6">or click to browse your files</p>
+                        <input type="file" id="fileInput" class="hidden" multiple>
+                        <button id="browseBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-6 rounded-full transition duration-300">
+                            <i class="fas fa-folder-open mr-2"></i> Browse Files
+                        </button>
+                    </div>
+                </div>
+
+                <!-- File List -->
+                <div id="fileList" class="space-y-4 hidden">
+                    <h3 class="text-lg font-medium text-gray-800 mb-4">Selected Files</h3>
+                    <div id="filesContainer" class="space-y-3"></div>
+                    <button id="uploadBtn" class="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-6 rounded-lg mt-6 transition duration-300 flex items-center justify-center">
+                        <i class="fas fa-upload mr-2"></i> Upload All Files
+                    </button>
+                </div>
+            </div>
+
+            <!-- Upload Progress -->
+            <div id="uploadProgress" class="hidden bg-gray-50 border-t border-gray-200 p-6">
+                <h3 class="text-lg font-medium text-gray-800 mb-4">Upload Progress</h3>
+                <div id="progressContainer" class="space-y-4"></div>
+            </div>
+        </div>
+
+        <!-- Features -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
+            <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition duration-300">
+                <div class="text-indigo-500 text-3xl mb-4">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <h3 class="text-xl font-semibold mb-2 text-gray-800">Secure Uploads</h3>
+                <p class="text-gray-600">All files are encrypted during transfer and storage for maximum security.</p>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition duration-300">
+                <div class="text-indigo-500 text-3xl mb-4">
+                    <i class="fas fa-bolt"></i>
+                </div>
+                <h3 class="text-xl font-semibold mb-2 text-gray-800">Fast Processing</h3>
+                <p class="text-gray-600">High-speed servers ensure your files are processed quickly and efficiently.</p>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition duration-300">
+                <div class="text-indigo-500 text-3xl mb-4">
+                    <i class="fas fa-file-alt"></i>
+                </div>
+                <h3 class="text-xl font-semibold mb-2 text-gray-800">Multiple Formats</h3>
+                <p class="text-gray-600">Supports all file types including documents, images, videos, and archives.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const dropzone = document.getElementById('dropzone');
+            const fileInput = document.getElementById('fileInput');
+            const browseBtn = document.getElementById('browseBtn');
+            const fileList = document.getElementById('fileList');
+            const filesContainer = document.getElementById('filesContainer');
+            const uploadBtn = document.getElementById('uploadBtn');
+            const uploadProgress = document.getElementById('uploadProgress');
+            const progressContainer = document.getElementById('progressContainer');
+
+            let files = [];
+
+            // Handle drag and drop events
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropzone.addEventListener(eventName, preventDefaults, false);
+            });
+
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropzone.addEventListener(eventName, highlight, false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropzone.addEventListener(eventName, unhighlight, false);
+            });
+
+            function highlight() {
+                dropzone.classList.add('active');
+            }
+
+            function unhighlight() {
+                dropzone.classList.remove('active');
+            }
+
+            // Handle dropped files
+            dropzone.addEventListener('drop', handleDrop, false);
+
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const droppedFiles = dt.files;
+                handleFiles(droppedFiles);
+            }
+
+            // Handle file input
+            browseBtn.addEventListener('click', () => fileInput.click());
+            fileInput.addEventListener('change', function() {
+                handleFiles(this.files);
+            });
+
+            // Process selected files
+            function handleFiles(selectedFiles) {
+                files = [...files, ...selectedFiles];
+                updateFileList();
+            }
+
+            // Update the file list UI
+            function updateFileList() {
+                if (files.length === 0) {
+                    fileList.classList.add('hidden');
+                    return;
+                }
+
+                filesContainer.innerHTML = '';
+                
+                files.forEach((file, index) => {
+                    const fileItem = document.createElement('div');
+                    fileItem.className = 'file-item bg-gray-50 rounded-lg p-4 flex items-center justify-between';
+                    
+                    const fileInfo = document.createElement('div');
+                    fileInfo.className = 'flex items-center';
+                    
+                    const fileIcon = document.createElement('div');
+                    fileIcon.className = 'text-indigo-500 mr-4';
+                    
+                    // Set icon based on file type
+                    if (file.type.startsWith('image/')) {
+                        fileIcon.innerHTML = '<i class="fas fa-image text-2xl"></i>';
+                    } else if (file.type.startsWith('video/')) {
+                        fileIcon.innerHTML = '<i class="fas fa-video text-2xl"></i>';
+                    } else if (file.type.startsWith('audio/')) {
+                        fileIcon.innerHTML = '<i class="fas fa-music text-2xl"></i>';
+                    } else if (file.type === 'application/pdf') {
+                        fileIcon.innerHTML = '<i class="fas fa-file-pdf text-2xl"></i>';
+                    } else if (file.type.includes('document') || file.type.includes('word')) {
+                        fileIcon.innerHTML = '<i class="fas fa-file-word text-2xl"></i>';
+                    } else if (file.type.includes('spreadsheet') || file.type.includes('excel')) {
+                        fileIcon.innerHTML = '<i class="fas fa-file-excel text-2xl"></i>';
+                    } else if (file.type.includes('zip') || file.type.includes('compressed')) {
+                        fileIcon.innerHTML = '<i class="fas fa-file-archive text-2xl"></i>';
+                    } else {
+                        fileIcon.innerHTML = '<i class="fas fa-file text-2xl"></i>';
+                    }
+                    
+                    const fileDetails = document.createElement('div');
+                    fileDetails.innerHTML = `
+                        <div class="font-medium text-gray-800">${file.name}</div>
+                        <div class="text-sm text-gray-500">${formatFileSize(file.size)}</div>
+                    `;
+                    
+                    const removeBtn = document.createElement('button');
+                    removeBtn.className = 'text-red-500 hover:text-red-700';
+                    removeBtn.innerHTML = '<i class="fas fa-times"></i>';
+                    removeBtn.addEventListener('click', () => removeFile(index));
+                    
+                    fileInfo.appendChild(fileIcon);
+                    fileInfo.appendChild(fileDetails);
+                    fileItem.appendChild(fileInfo);
+                    fileItem.appendChild(removeBtn);
+                    filesContainer.appendChild(fileItem);
+                });
+                
+                fileList.classList.remove('hidden');
+            }
+
+            // Remove file from list
+            function removeFile(index) {
+                files.splice(index, 1);
+                updateFileList();
+            }
+
+            // Format file size
+            function formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+
+            // Handle upload
+            uploadBtn.addEventListener('click', uploadFiles);
+
+            async function uploadFiles() {
+                if (files.length === 0) return;
+                
+                uploadBtn.disabled = true;
+                uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Uploading...';
+                
+                uploadProgress.classList.remove('hidden');
+                progressContainer.innerHTML = '';
+
+                for (let index = 0; index < files.length; index++) {
+                    const file = files[index];
+                    const progressBar = document.getElementById(`progress-${index}`);
+                    const statusText = document.getElementById(`status-${index}`);
+                    
+                    const formData = new FormData();
+                    formData.append('file', file);
+
+                    try {
+                        const response = await fetch('/upload', {
+                            method: 'POST',
+                            body: formData,
+                        });
+
+                        if (response.ok) {
+                            statusText.textContent = 'Upload complete!';
+                            statusText.className = 'text-xs text-green-500 mt-2';
+                        } else {
+                            statusText.textContent = `Upload failed: ${response.statusText}`;
+                            statusText.className = 'text-xs text-red-500 mt-2';
+                        }
+                    } catch (error) {
+                        statusText.textContent = `Upload failed: ${error.message}`;
+                        statusText.className = 'text-xs text-red-500 mt-2';
+                    }
+
+                    progressBar.style.width = '100%';
+                }
+
+                uploadBtn.innerHTML = '<i class="fas fa-check-circle mr-2"></i> Upload Complete';
+                setTimeout(() => {
+                    uploadBtn.disabled = false;
+                    uploadBtn.innerHTML = '<i class="fas fa-upload mr-2"></i> Upload All Files';
+                    files = [];
+                    updateFileList();
+                }, 2000);
+            }
+        });
+    </script>
+</body>
+</html>
